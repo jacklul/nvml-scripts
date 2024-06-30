@@ -1,0 +1,11 @@
+[Unit]
+Description=NVML Fan Curve
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/local/sbin/nvml-fan-curve --env /etc/nvml-fan-curve.conf
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=NVML Undervolt
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/local/sbin/nvml-undervolt --env /etc/nvml-undervolt.conf
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

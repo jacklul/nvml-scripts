@@ -112,14 +112,43 @@ def validate_args(args):
         print("Error: Sleep time must be bigger than 0")
         exit(1)
 
-def interpolate_clock(value, offset, min_val, max_val):
+def get_step_mhz(arr, tolerance=1):
+    checks = [0, 0]
+    for i in range(1, len(arr)):
+        diff = abs(arr[i] - arr[i - 1])
+
+        if (abs(diff - 7) <= tolerance):
+            checks[0] += 1
+        elif (abs(diff - 15) <= tolerance):
+            checks[1] += 1
+
+    if checks[0] > checks[1]:
+        return 7.5
+    elif checks[1] > checks[0]:
+        return 15
+
+    return 0
+
+def round_to_nearest_step(value, divisor):
+    if value == 0:
+        return 0
+
+    if value % divisor == 0:
+        nearest_value = (value // divisor) * divisor
+    else:
+        nearest_value = ((value // divisor) + 1) * divisor
+
+    return math.ceil(nearest_value)
+
+def interpolate_offset(value, offset, min_val, max_val, step_mhz):
     if value <= min_val:
         return 0
     elif value >= max_val:
         return offset
     else:
         scale = (value - min_val) / (max_val - min_val)
-        return int(scale * offset)
+        scaled_offset = int(scale * offset)
+        return round_to_nearest_step(scaled_offset, step_mhz)
 
 def set_pstate_clocks(handle, clock_type, clock_offset, target_pstates):
     for pstate in range(0, target_pstates + 1):
@@ -128,7 +157,6 @@ def set_pstate_clocks(handle, clock_type, clock_offset, target_pstates):
         struct.type = clock_type
         struct.pstate = pstate
         struct.clockOffsetMHz = clock_offset
-
         return nvmlDeviceSetClockOffsets(handle, struct)
 
 def main():
@@ -146,7 +174,8 @@ def main():
     parser.add_argument('-a', '--target-clock', type=int, help='target clock', default=0)
     parser.add_argument('-r', '--transition-clock', type=int, help='clock at which to toggle the changes', default=0)
     parser.add_argument('-l', '--curve', action='store_true', help='use linear curve mode', default=False)
-    parser.add_argument('-n', '--curve-increment', type=float, help='linear curve increments', default=30)
+    parser.add_argument('-n', '--curve-increment', type=float, help='linear curve increments', default=15)
+    parser.add_argument('-k', '--clock-step', type=float, help='clock step override', default=0)
     parser.add_argument('-w', '--power-limit', type=int, help='power limit in watts (W)', default=0)
     parser.add_argument('-d', '--temperature-limit', type=int, help='temperature limit in celsius (C)', default=0)
     parser.add_argument('-p', '--pstates', type=int, help='pstates to apply to', default=0)
@@ -186,6 +215,31 @@ def main():
         uuid = nvmlDeviceGetUUID(handle)
 
         print(f"Detected {name} ({uuid})")
+
+        memory_clocks = nvmlDeviceGetSupportedMemoryClocks(handle)
+        graphics_clocks = nvmlDeviceGetSupportedGraphicsClocks(handle, max(memory_clocks))
+
+        if args.verbose:
+            print(f"Supported core clocks: {graphics_clocks}")
+
+        if args.clock_step == 0:
+            step_mhz = get_step_mhz(graphics_clocks)
+            if step_mhz == 0:
+                print("Warning: Unable to determine clock step MHz, using fallback value of 15")
+                step_mhz = 15
+            elif args.verbose:
+                print(f"Clock step is {step_mhz} MHz")
+        else:
+            step_mhz = args.clock_step
+            if args.verbose:
+                print(f"Using user defined clock step of {step_mhz} MHz")
+
+        if not args.curve_increment % step_mhz == 0:
+            print(f"Warning: Curve increment should be divisible by clock step ({step_mhz})")
+
+        if args.curve_increment < step_mhz * 2:
+            print(f"Error: Curve increment must not be lower than doubled clock step ({step_mhz*2})")
+            exit(1)
 
         try:
             default_persistence_mode = nvmlDeviceGetPersistenceMode(handle)
@@ -245,9 +299,9 @@ def main():
 
         last_clock = 0
         last_change = time.time()
-        last_underclock = True
+        last_underclock = False
         underclock = False
-        updateclock = False
+        updateclock = True
 
         while state['running']:
             pstate = nvmlDeviceGetPerformanceState(handle)
@@ -260,14 +314,14 @@ def main():
             #    clock = int(file.read().strip())
 
             if pstate <= args.pstates:
-                if not last_underclock and clock >= args.transition_clock - 5 and time.time() - last_change > 1:
+                if not last_underclock and clock >= args.transition_clock - 4 and time.time() - last_change > 1:
                     underclock = True
 
                     if args.curve:
                         min_clock = args.transition_clock
                         max_clock = args.transition_clock + args.curve_increment
 
-                elif last_underclock and clock <= args.transition_clock + 5 and time.time() - last_change > 3:
+                elif last_underclock and clock <= args.transition_clock + 4 and time.time() - last_change > 3:
                     underclock = False
 
                 if args.curve:
@@ -275,7 +329,7 @@ def main():
                         up_delay = args.sleep
                         down_delay = math.ceil((args.sleep * 3) * 100) / 100
 
-                        if clock >= max_clock - 5 and time.time() - last_change > up_delay:
+                        if clock >= max_clock - 4 and time.time() - last_change > up_delay:
                             if max_clock + args.curve_increment <= args.target_clock:
                                 min_clock = min_clock + args.curve_increment
                                 max_clock = max_clock + args.curve_increment
@@ -283,7 +337,7 @@ def main():
                                 if underclock == last_underclock:
                                     updateclock = True
 
-                        elif clock <= min_clock + 5 and time.time() - last_change > down_delay:
+                        elif clock <= min_clock + 4 and time.time() - last_change > down_delay:
                             if min_clock - args.curve_increment >= args.transition_clock:
                                 min_clock = min_clock - args.curve_increment
                                 max_clock = max_clock - args.curve_increment
@@ -292,7 +346,7 @@ def main():
                                     updateclock = True
 
                     if last_clock != clock:
-                        offset = interpolate_clock(clock, args.core_offset, args.transition_clock, args.target_clock)
+                        offset = interpolate_offset(clock, args.core_offset, args.transition_clock, args.target_clock, step_mhz)
                         updateclock = True
 
             else:

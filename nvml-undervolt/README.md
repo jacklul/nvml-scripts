@@ -12,6 +12,8 @@ Currently there is no straightforward way to achieve this as there is no voltage
 
 ## Example usage
 
+See `python3 nvml-fan-curve.py --help` for available options.
+
 Admin privileges are required.
 
 ```bash
@@ -41,8 +43,11 @@ Additionally power will be limited to 120 watts and temperature limit will be se
 - `--curve-increment` - by how much increment (or decrement) the clock lock
   - should be set to double the value of your card's clock offset step, for most modern cards the increments are 15 or 7.5 so 30 and 15 respectively should be set
   - you can also further increase it if you want bigger jumps when script increases the clock
+- `--clock-step` - use this in case script cannot detect or sets the wrong step MHz
 - `--power-limit` - set power limit in watts
 - `--temperature-limit` - set temperature limit
 - `--pstates` - defauts to 0 as that's the "full power" mode when card renders 3D stuff, you shouldn't change it unless your card also uses states 1-4 when gaming
+
+Add `-t -v` options to see list of available clocks as well as offset step in verbose output.
 
 For better responsiveness when increasing/decreasing the clock you should either decrease `--sleep` (`0.3` - `0.5` should be fine) or increase `--curve-increment`.

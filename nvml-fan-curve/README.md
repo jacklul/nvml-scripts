@@ -7,6 +7,8 @@ Simple hysteresis (on the way down) is supported.
 
 ## Example usage
 
+See `python3 nvml-fan-curve.py --help` for available options.
+
 Admin privileges are required.
 
 ```bash

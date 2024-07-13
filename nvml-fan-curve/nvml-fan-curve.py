@@ -19,7 +19,7 @@ import signal
 try:
     from pynvml import *
 except ModuleNotFoundError:
-    print(f"Error: Module 'nvidia-ml-py' not found - please install it using 'pip install nvidia-ml-py'")
+    print(f"Error: Module 'nvidia-ml-py' not found - please install it using 'pip install nvidia-ml-py'", file=sys.stderr)
     exit(1)
 
 ################################
@@ -99,11 +99,11 @@ def validate_args(args):
         invalid = True
 
     if invalid:
-        print("Error: Curve must contain at least one point in the format 'temperature:speed,...'")
+        print("Error: Curve must contain at least one point in the format 'temperature:speed,...'", file=sys.stderr)
         exit(1)
 
     if not args.sleep > 0:
-        print("Error: Sleep time must be bigger than 0")
+        print("Error: Sleep time must be bigger than 0", file=sys.stderr)
         exit(1)
 
 def parse_fan_curve(fan_curve):
@@ -178,6 +178,9 @@ def main():
     args = assign_env_values(args, types, ['env'])
     validate_args(args)
 
+    if os.getenv('INVOCATION_ID') or os.getenv('JOURNAL_STREAM'):
+        args.verbose = False
+
     if args.verbose:
         print(args)
 
@@ -211,7 +214,7 @@ def main():
 
         #min_fan_speed, max_fan_speed = nvmlDeviceGetMinMaxFanSpeed(handle)  # This is currently broken in NVIDIA's python lib?
         #if min_speed < min_fan_speed or max_speed > max_fan_speed:
-        #    print(f"Warning: Allowed fan speed range is {min_fan_speed}-{max_fan_speed}%")
+        #    print(f"Warning: Allowed fan speed range is {min_fan_speed}-{max_fan_speed}%", file=sys.stderr)
 
         #set_gpu_fan_policy(handle, fans, true)  # Not required as calling nvmlDeviceSetFanSpeed_v2 enforces manual mode
 

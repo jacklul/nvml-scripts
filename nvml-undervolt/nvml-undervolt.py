@@ -20,7 +20,7 @@ import math
 try:
     from pynvml import *
 except ModuleNotFoundError:
-    print(f"Error: Module 'nvidia-ml-py' not found - please install it using 'pip install nvidia-ml-py'")
+    print(f"Error: Module 'nvidia-ml-py' not found - please install it using 'pip install nvidia-ml-py'", file=sys.stderr)
     exit(1)
 
 ################################
@@ -89,27 +89,27 @@ def create_interrupt_handler(variable):
 
 def validate_args(args):
     if not NVML_PSTATE_0 <= int(args.pstates) < NVML_PSTATE_15:
-        print("Error: Invalid PSTATEs")
+        print("Error: Invalid PSTATEs", file=sys.stderr)
         exit(1)
 
     if not args.target_clock > 0:
-        print("Error: Target clock is not set")
+        print("Error: Target clock is not set", file=sys.stderr)
         exit(1)  
 
     if not args.transition_clock > 0:
-        print("Error: Transition clock is not set")
+        print("Error: Transition clock is not set", file=sys.stderr)
         exit(1)  
 
     if args.target_clock > 0 and args.transition_clock > 0 and args.transition_clock + 50 >= args.target_clock:
-        print("Error: Target clock must be bigger than transition clock by more than 50")
+        print("Error: Target clock must be bigger than transition clock by more than 50", file=sys.stderr)
         exit(1)  
 
     if not args.core_offset > 0:
-        print("Error: Core offset is not set")
+        print("Error: Core offset is not set", file=sys.stderr)
         exit(1)  
 
     if not args.sleep > 0:
-        print("Error: Sleep time must be bigger than 0")
+        print("Error: Sleep time must be bigger than 0", file=sys.stderr)
         exit(1)
 
 def get_step_mhz(clocks):
@@ -180,6 +180,9 @@ def main():
     args = assign_env_values(args, types, ['env'])
     validate_args(args)
 
+    if os.getenv('INVOCATION_ID') or os.getenv('JOURNAL_STREAM'):
+        args.verbose = False
+
     if args.verbose:
         print(args)
 
@@ -213,7 +216,7 @@ def main():
         if args.clock_step == 0:
             step_mhz = get_step_mhz(graphics_clocks)
             if not step_mhz > 0:
-                print("Warning: Unable to determine clock step MHz, using fallback value of 15")
+                print("Warning: Unable to determine clock step MHz, using fallback value of 15", file=sys.stderr)
                 step_mhz = 15
             elif args.verbose:
                 print(f"Clock step is {step_mhz} MHz")
@@ -226,22 +229,22 @@ def main():
             args.curve_increment = step_mhz * 2
 
         if not args.curve_increment % step_mhz == 0:
-            print(f"Warning: Curve increment should be divisible by clock step ({step_mhz})")
+            print(f"Warning: Curve increment should be divisible by clock step ({step_mhz})", file=sys.stderr)
 
         if args.curve_increment < step_mhz * 2:
-            print(f"Error: Curve increment must not be lower than doubled clock step ({step_mhz*2})")
+            print(f"Error: Curve increment must not be lower than doubled clock step ({step_mhz*2})", file=sys.stderr)
             exit(1)
 
         try:
             default_persistence_mode = nvmlDeviceGetPersistenceMode(handle)
             if default_persistence_mode:
-                print(f"Warning: Persistence mode is already enabled - make sure no other script is controlling clocks")
+                print(f"Warning: Persistence mode is already enabled - make sure no other script is controlling clocks", file=sys.stderr)
 
             if not default_persistence_mode and not args.test:
                 nvmlDeviceSetPersistenceMode(handle, NVML_FEATURE_ENABLED)
         except NVMLError as error:
             if error.value == NVML_ERROR_NOT_SUPPORTED:
-                print("Warning: Persistence mode is not supported on this device")
+                print("Warning: Persistence mode is not supported on this device", file=sys.stderr)
             else:
                 raise error
 
@@ -251,7 +254,7 @@ def main():
             max_limit = max_limit / 1000.0
 
             if args.power_limit < min_limit or args.power_limit > max_limit: 
-                print(f"Error: Power limit must be in range {min_limit} - {max_limit}")
+                print(f"Error: Power limit must be in range {min_limit} - {max_limit}", file=sys.stderr)
                 exit(1)
 
         if args.power_limit > 0:
@@ -266,7 +269,7 @@ def main():
             max_limit = nvmlDeviceGetTemperatureThreshold(handle, NVML_TEMPERATURE_THRESHOLD_ACOUSTIC_MAX)
 
             if args.temperature_limit < min_limit or args.temperature_limit > max_limit: 
-                print(f"Error: Temperature limit must be in range {min_limit} - {max_limit}")
+                print(f"Error: Temperature limit must be in range {min_limit} - {max_limit}", file=sys.stderr)
                 exit(1)
 
         if args.temperature_limit > 0:
@@ -350,7 +353,7 @@ def main():
 
                     if args.transition_clock > 0 and args.target_clock > 0:
                         if max_clock > args.target_clock:
-                            print(f"Attempted to set max clock to {max_clock} while user defined target clock is {args.target_clock}")
+                            print(f"Attempted to set max clock to {max_clock} while user defined target clock is {args.target_clock}", file=sys.stderr)
                             max_clock = args.target_clock
 
                         if not args.test:
@@ -361,7 +364,7 @@ def main():
 
                     if args.core_offset > 0:
                         if offset > args.core_offset:
-                            print(f"Attempted to set offset to {offset} while user defined offset is {args.core_offset}")
+                            print(f"Attempted to set offset to {offset} while user defined offset is {args.core_offset}", file=sys.stderr)
                             offset = args.core_offset
 
                         if not args.test:

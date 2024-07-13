@@ -112,22 +112,10 @@ def validate_args(args):
         print("Error: Sleep time must be bigger than 0")
         exit(1)
 
-def get_step_mhz(arr, tolerance=1):
-    checks = [0, 0]
-    for i in range(1, len(arr)):
-        diff = abs(arr[i] - arr[i - 1])
-
-        if (abs(diff - 7) <= tolerance):
-            checks[0] += 1
-        elif (abs(diff - 15) <= tolerance):
-            checks[1] += 1
-
-    if checks[0] > checks[1]:
-        return 7.5
-    elif checks[1] > checks[0]:
-        return 15
-
-    return 0
+def get_step_mhz(clocks):
+    clocks = clocks[0:3]
+    differences = [clocks[i] - clocks[i + 1] for i in range(len(clocks) - 1)]
+    return sum(differences) / len(differences)
 
 def round_to_nearest_step(value, divisor):
     if value == 0:
@@ -174,12 +162,12 @@ def main():
     parser.add_argument('-a', '--target-clock', type=int, help='target clock', default=0)
     parser.add_argument('-r', '--transition-clock', type=int, help='clock at which to toggle the changes', default=0)
     parser.add_argument('-l', '--curve', action='store_true', help='use linear curve mode', default=False)
-    parser.add_argument('-n', '--curve-increment', type=float, help='linear curve increments', default=15)
-    parser.add_argument('-k', '--clock-step', type=float, help='clock step override', default=0)
+    parser.add_argument('-n', '--curve-increment', type=float, help='linear curve increments', default=0)
+    parser.add_argument('-k', '--clock-step', type=float, help='core clock step in MHz', default=0)
     parser.add_argument('-w', '--power-limit', type=int, help='power limit in watts (W)', default=0)
     parser.add_argument('-d', '--temperature-limit', type=int, help='temperature limit in celsius (C)', default=0)
     parser.add_argument('-p', '--pstates', type=int, help='pstates to apply to', default=0)
-    parser.add_argument('-s', '--sleep', type=float, help='sleep time in main loop', default=1)
+    parser.add_argument('-s', '--sleep', type=float, help='sleep time in main loop', default=0.5)
     parser.add_argument('-v', '--verbose', action='store_true', help='show verbose messages', default=False)
     parser.add_argument('-t', '--test', action='store_true', help='do not execute control commands', default=False)
 
@@ -224,7 +212,7 @@ def main():
 
         if args.clock_step == 0:
             step_mhz = get_step_mhz(graphics_clocks)
-            if step_mhz == 0:
+            if not step_mhz > 0:
                 print("Warning: Unable to determine clock step MHz, using fallback value of 15")
                 step_mhz = 15
             elif args.verbose:
@@ -233,6 +221,9 @@ def main():
             step_mhz = args.clock_step
             if args.verbose:
                 print(f"Using user defined clock step of {step_mhz} MHz")
+
+        if args.curve_increment == 0:
+            args.curve_increment = step_mhz * 2
 
         if not args.curve_increment % step_mhz == 0:
             print(f"Warning: Curve increment should be divisible by clock step ({step_mhz})")
@@ -314,22 +305,19 @@ def main():
             #    clock = int(file.read().strip())
 
             if pstate <= args.pstates:
-                if not last_underclock and clock >= args.transition_clock - 4 and time.time() - last_change > 1:
+                if not last_underclock and clock >= args.transition_clock - 4 and time.time() - last_change > args.sleep:
                     underclock = True
 
                     if args.curve:
                         min_clock = args.transition_clock
                         max_clock = args.transition_clock + args.curve_increment
 
-                elif last_underclock and clock <= args.transition_clock + 4 and time.time() - last_change > 3:
+                elif last_underclock and clock <= args.transition_clock + 4 and time.time() - last_change > args.sleep * 2:
                     underclock = False
 
                 if args.curve:
                     if underclock:
-                        up_delay = args.sleep
-                        down_delay = math.ceil((args.sleep * 3) * 100) / 100
-
-                        if clock >= max_clock - 4 and time.time() - last_change > up_delay:
+                        if clock >= max_clock - 4 and time.time() - last_change > args.sleep:
                             if max_clock + args.curve_increment <= args.target_clock:
                                 min_clock = min_clock + args.curve_increment
                                 max_clock = max_clock + args.curve_increment
@@ -337,7 +325,7 @@ def main():
                                 if underclock == last_underclock:
                                     updateclock = True
 
-                        elif clock <= min_clock + 4 and time.time() - last_change > down_delay:
+                        elif clock <= min_clock + 4 and time.time() - last_change > args.sleep * 2:
                             if min_clock - args.curve_increment >= args.transition_clock:
                                 min_clock = min_clock - args.curve_increment
                                 max_clock = max_clock - args.curve_increment

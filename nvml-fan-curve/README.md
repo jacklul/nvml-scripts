@@ -3,13 +3,15 @@
 Script to control GPU fans using a custom curve.  
 Simple hysteresis (on the way down) is supported.
 
-**You will need at least driver `520.56` to use this.**
+## Requirements
+
+- at least driver version `520.56`
+- admin privileges
+- `nvidia-ml-py` Python package - search for `python-nvidia-ml-py` in your package manager or install it with `pip install nvidia-ml-py`
 
 ## Example usage
 
 See `python3 nvml-fan-curve.py --help` for available options.
-
-Admin privileges are required.
 
 ```bash
 python3 nvml-fan-curve.py --curve "50:30,60:65,80:100" --hysteresis 5

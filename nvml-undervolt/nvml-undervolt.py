@@ -20,7 +20,7 @@ import math
 try:
     from pynvml import *
 except ModuleNotFoundError:
-    print(f"Error: Module 'nvidia-ml-py' not found - please install it using 'pip install nvidia-ml-py'", file=sys.stderr)
+    print(f"Error: Module 'nvidia-ml-py' not found - please install it using 'pip install nvidia-ml-py', you might also be able to find it as 'python-nvidia-ml-py' in your package manager", file=sys.stderr)
     exit(1)
 
 ################################

@@ -8,13 +8,15 @@ Currently there is no straightforward way to achieve this as there is no voltage
 > [!WARNING]
 > **You're using this script at your own risk - do not blindly set untested values - test everything either in MSI Afterburner or `nvidia-smi` command first!**
 
-**You will need at least driver `555.42` to use this.**
+## Requirements
+
+- at least driver version `555.42`
+- admin privileges
+- `nvidia-ml-py` Python package - search for `python-nvidia-ml-py` in your package manager or install it with `pip install nvidia-ml-py`
 
 ## Example usage
 
 See `python3 nvml-fan-curve.py --help` for available options.
-
-Admin privileges are required.
 
 ```bash
 python3 nvml-undervolt.py --core-offset 100 --target-clock 1800 --transition-clock 1500 --power-limit 150 --temperature-limit 70

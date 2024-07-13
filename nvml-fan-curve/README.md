@@ -12,11 +12,10 @@ See `python3 nvml-fan-curve.py --help` for available options.
 Admin privileges are required.
 
 ```bash
-python3 nvml-fan-curve.py --curve "50:30,80:100" --hysteresis 5
+python3 nvml-fan-curve.py --curve "50:30,60:65,80:100" --hysteresis 5
 ```
 
 This will run a simple linear curve starting with 30% at 50C and 100% at 80C.  
-You can also us use complex curves like `44:0,45:55,60:65,70:75,75:80,80:90,85:100`.
 
 > [!NOTE]
 > You can also use the provided systemd service file and config.

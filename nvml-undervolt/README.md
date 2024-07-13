@@ -41,6 +41,7 @@ Additionally power will be limited to 120 watts and temperature limit will be se
 - `--curve` - scales offset between transition and target clocks, locks the clock in small increments and adjusts the offset
   - this can help with stability but will also increase the time it takes for the GPU to reach target clock
 - `--curve-increment` - by how much increment (or decrement) the clock lock
+  - the script will automatically set this
   - should be set to double the value of your card's clock offset step, for most modern cards the increments are 15 or 7.5 so 30 and 15 respectively should be set
   - you can also further increase it if you want bigger jumps when script increases the clock
 - `--clock-step` - use this in case script cannot detect or sets the wrong step MHz

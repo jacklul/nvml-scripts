@@ -12,12 +12,14 @@ python3 nvml-undervolt.py --core-offset 158 --target-clock 1957 --transition-clo
 ## Using simple one-point undervolt method
 
 - my top curve point is 1957 MHz @ 950 mV, that is +158 offset (157.5)
-- my bottom curve point is at 1747 MHz
+- my bottom curve point is at 1740 MHz
 - my card uses 7.5 MHz clock offset steps
 
 ```bash
-python3 nvml-undervolt.py --core-offset 158 --target-clock 1957 --transition-clock 1747 --curve --curve-increment 15
+python3 nvml-undervolt.py --core-offset 158 --target-clock 1957 --transition-clock 1740 --curve --curve-increment 15
 ```
+
+_`--curve-increment` should be automatically set and in most cases you don't have to provide that option._
 
 ## Results for the second method
 

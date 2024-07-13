@@ -32,23 +32,35 @@ Additionally power will be limited to 120 watts and temperature limit will be se
 ### What each parameter does
 
 - `--core-offset` - the offset value that shifts the whole curve upwards
-- `--memory-offset` - memory overclock offset, set it only if you know it is stable for you
+
+- `--memory-offset` - memory overclock offset, set it only if you know that it is stable for you
+
 - `--target-clock` - the undervolt target frequency
   - it has to be a valid frequency value (your card can run at this exact clock)
+
 - `--transition-clock` - the frequency that switches the undervolt ON and OFF
-  - the card has to be stable at this frequency with the provided offset
-  - again just like with target clock - it has to be a valid frequency value
-- `--curve` - scales offset between transition and target clocks, locks the clock in small increments and adjusts the offset
-  - this can help with stability but will also increase the time it takes for the GPU to reach target clock
+  - the card has to be stable at this frequency with the provided offset (does not apply to `--curve` mode)
+  - it has to be a valid frequency value
+
+- `--curve` - scales offset between transition and target clock
+  - this can help with stability but will also increase the time it takes for the GPU to reach target clock as the script will be manually increasing it in small steps
+  - you should set `--transition-clock` to the unchanged point at the bottom of the curve
+
 - `--curve-increment` - by how much increment (or decrement) the clock lock
-  - the script will automatically set this
+  - the script will automatically set this based on `--clock-step`
   - should be set to double the value of your card's clock offset step, for most modern cards the increments are 15 or 7.5 so 30 and 15 respectively should be set
-  - you can also further increase it if you want bigger jumps when script increases the clock
+  - you can also further increase it if you want bigger jumps when script controls the clock
+
 - `--clock-step` - use this in case script cannot detect or sets the wrong step MHz
+  - the script will automatically set this to calculated value based on differences between supported clocks
+
 - `--power-limit` - set power limit in watts
+
 - `--temperature-limit` - set temperature limit
-- `--pstates` - defauts to 0 as that's the "full power" mode when card renders 3D stuff, you shouldn't change it unless your card also uses states 1-4 when gaming
+
+- `--pstates` - defauts to 0 as that's the "full power" mode when card renders 3D stuff
+  - you shouldn't change it unless your card also uses pstates 1-4 when gaming
 
 Add `-t -v` options to see list of available clocks as well as offset step in verbose output.
 
-For better responsiveness when increasing/decreasing the clock you should either decrease `--sleep` (`0.3` - `0.5` should be fine) or increase `--curve-increment`.
+For better responsiveness when increasing/decreasing the clock you should either decrease `--sleep` (`0.3` - `0.5`) or increase `--curve-increment` (just make sure it is divisible by `--clock-step`).

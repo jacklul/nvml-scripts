@@ -12,7 +12,7 @@ python3 nvml-undervolt.py --core-offset 158 --target-clock 1957 --transition-clo
 ## Using simple one-point undervolt method
 
 - my top curve point is 1957 MHz @ 950 mV, that is +158 offset (157.5)
-- my bottom curve point is at 1740 MHz
+- my bottom curve point is at 1740 MHz (0 offset)
 - my card uses 7.5 MHz clock offset steps
 
 ```bash
@@ -42,7 +42,8 @@ I might give a try the CTRL+drag method but currently have no time for proper st
 
 ### Frequency and voltage on "target clock" using the script
 
-Close enough, right? This could be further tweaked by increasing the offset.
+Close enough, right? This could be further tweaked by increasing the offset.  
+Unfortunately because we are using a trickery here sometimes the voltage will be higher than what we wanted, other times it can be a bit lower - it is important to account for that and have some stability buffer.
 
 ![](https://i.imgur.com/sNn1eCC.jpeg)
 ![](https://i.imgur.com/2u0GfCy.jpeg)

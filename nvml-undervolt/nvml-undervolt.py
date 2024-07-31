@@ -145,7 +145,7 @@ def set_pstate_clocks(handle, clock_type, clock_offset, target_pstates):
         struct.type = clock_type
         struct.pstate = pstate
         struct.clockOffsetMHz = clock_offset
-        return nvmlDeviceSetClockOffsets(handle, struct)
+        nvmlDeviceSetClockOffsets(handle, struct)
 
 def main():
     parser = argparse.ArgumentParser(

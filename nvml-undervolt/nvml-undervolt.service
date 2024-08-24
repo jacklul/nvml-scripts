@@ -3,9 +3,11 @@ Description=NVML Undervolt
 After=multi-user.target
 
 [Service]
+Environment=PYTHONUNBUFFERED=1
 ExecStart=/usr/local/sbin/nvml-undervolt --env /etc/nvml-undervolt.conf
 Restart=on-failure
 RestartSec=5
+ProtectSystem=strict
 
 [Install]
 WantedBy=multi-user.target

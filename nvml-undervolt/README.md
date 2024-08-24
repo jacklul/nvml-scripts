@@ -1,6 +1,6 @@
 # nvml-undervolt
 
-**Currently this script is very experimental**
+**Currently this script is very experimental, currently tested on Windows only!**
 
 This is a simple script to setup an undervolt on Linux by shifting the curve up using an offset and then locking the max clock.  
 Currently there is no straightforward way to achieve this as there is no voltage/curve control on Linux so this is my hacky scripted method.

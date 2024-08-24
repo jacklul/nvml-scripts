@@ -12,7 +12,7 @@ Currently there is no straightforward way to achieve this as there is no voltage
 
 - at least driver version `555.42`
 - admin privileges
-- `nvidia-ml-py` Python package - search for `python-nvidia-ml-py` or `python3-pynvml` in your package manager or install it with `pip install nvidia-ml-py`
+- `nvidia-ml-py` Python package - search for `python-nvidia-ml-py` in your package manager or install it with `pipx --global install nvidia-ml-py`
 
 ## Example usage
 

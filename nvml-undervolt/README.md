@@ -66,3 +66,5 @@ Additionally power will be limited to 120 watts and temperature limit will be se
 Add `-t -v` options to see list of available clocks as well as offset step in verbose output.
 
 For better responsiveness when increasing/decreasing the clock you should either decrease `--sleep` (`0.3` - `0.5`) or increase `--curve-increment` (just make sure it is divisible by `--clock-step`).
+
+I suggest to look at my example [RTX 3060 example.md](RTX 3060 example.md) to see the actual usage.

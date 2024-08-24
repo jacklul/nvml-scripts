@@ -47,4 +47,3 @@ Unfortunately because we are using a trickery here sometimes the voltage will be
 
 ![](https://i.imgur.com/sNn1eCC.jpeg)
 ![](https://i.imgur.com/2u0GfCy.jpeg)
-

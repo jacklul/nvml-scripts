@@ -1,5 +1,6 @@
 [Unit]
 Description=NVML Undervolt
+Wants=multi-user.target
 After=multi-user.target
 
 [Service]

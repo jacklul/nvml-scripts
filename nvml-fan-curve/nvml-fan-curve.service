@@ -1,5 +1,6 @@
 [Unit]
 Description=NVML Fan Curve
+Wants=multi-user.target
 After=multi-user.target
 
 [Service]

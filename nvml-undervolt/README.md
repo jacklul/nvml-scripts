@@ -22,6 +22,10 @@ See `python3 nvml-fan-curve.py --help` for available options.
 python3 nvml-undervolt.py --core-offset 100 --target-clock 1800 --transition-clock 1500 --power-limit 150 --temperature-limit 70
 ```
 
+> [!WARNING]
+> Don't just copy paste and run above command!  
+> I suggest you to look at my example [RTX 3060 example.md](RTX%203060%20example.md) to see the actual usage.
+
 This will set clock offset to +100 when PSTATE is 0 and clock reaches >=1500 MHz then revert the changes when it falls <=1500 MHz.  
 Additionally power will be limited to 120 watts and temperature limit will be set to 70C.
 
@@ -66,5 +70,3 @@ Additionally power will be limited to 120 watts and temperature limit will be se
 Add `-t -v` options to see list of available clocks as well as offset step in verbose output.
 
 For better responsiveness when increasing/decreasing the clock you should either decrease `--sleep` (`0.3` - `0.5`) or increase `--curve-increment` (just make sure it is divisible by `--clock-step`).
-
-I suggest to look at my example [RTX 3060 example.md](RTX 3060 example.md) to see the actual usage.

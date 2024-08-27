@@ -113,6 +113,9 @@ def validate_args(args):
         exit(1)
 
 def get_step_mhz(clocks):
+    if count(clocks) <= 2:
+        return 0
+
     clocks = clocks[0:3]
     differences = [clocks[i] - clocks[i + 1] for i in range(len(clocks) - 1)]
     return sum(differences) / len(differences)
@@ -207,11 +210,18 @@ def main():
 
         print(f"Detected {name} ({uuid})")
 
-        memory_clocks = nvmlDeviceGetSupportedMemoryClocks(handle)
-        graphics_clocks = nvmlDeviceGetSupportedGraphicsClocks(handle, max(memory_clocks))
+        graphics_clocks = []
+        try:
+            memory_clocks = nvmlDeviceGetSupportedMemoryClocks(handle)
+            graphics_clocks = nvmlDeviceGetSupportedGraphicsClocks(handle, max(memory_clocks))
 
-        if args.verbose:
-            print(f"Supported core clocks: {graphics_clocks}")
+            if args.verbose:
+                print(f"Supported core clocks: {graphics_clocks}")
+        except NVMLError as error:
+            if error.value == NVML_ERROR_NOT_SUPPORTED:
+                print("Warning: Getting clock information is not supported on this device", file=sys.stderr)
+            else:
+                raise error
 
         if args.clock_step == 0:
             step_mhz = get_step_mhz(graphics_clocks)
@@ -248,37 +258,49 @@ def main():
             else:
                 raise error
 
-        if not args.power_limit == None and args.power_limit > 0:
-            min_limit, max_limit = nvmlDeviceGetPowerManagementLimitConstraints(handle)
-            min_limit = min_limit / 1000.0
-            max_limit = max_limit / 1000.0
+        try:
+            if not args.power_limit == None and args.power_limit > 0:
+                min_limit, max_limit = nvmlDeviceGetPowerManagementLimitConstraints(handle)
+                min_limit = min_limit / 1000.0
+                max_limit = max_limit / 1000.0
 
-            if args.power_limit < min_limit or args.power_limit > max_limit: 
-                print(f"Error: Power limit must be in range {min_limit} - {max_limit}", file=sys.stderr)
-                exit(1)
+                if args.power_limit < min_limit or args.power_limit > max_limit: 
+                    print(f"Error: Power limit must be in range {min_limit} - {max_limit}", file=sys.stderr)
+                    exit(1)
 
-        if args.power_limit > 0:
-            if args.verbose:
-                print(f"Setting power limit to {args.power_limit} W")
+            if args.power_limit > 0:
+                if args.verbose:
+                    print(f"Setting power limit to {args.power_limit} W")
 
-            if not args.test:
-                nvmlDeviceSetPowerManagementLimit(handle, args.power_limit * 1000)
+                if not args.test:
+                    nvmlDeviceSetPowerManagementLimit(handle, args.power_limit * 1000)
+        except NVMLError as error:
+            if error.value == NVML_ERROR_NOT_SUPPORTED:
+                print("Warning: Power limit option is not supported on this device", file=sys.stderr)
+            else:
+                raise error
 
-        if not args.temperature_limit == None and args.temperature_limit > 0:
-            min_limit = nvmlDeviceGetTemperatureThreshold(handle, NVML_TEMPERATURE_THRESHOLD_ACOUSTIC_MIN)
-            max_limit = nvmlDeviceGetTemperatureThreshold(handle, NVML_TEMPERATURE_THRESHOLD_ACOUSTIC_MAX)
+        try:
+            if not args.temperature_limit == None and args.temperature_limit > 0:
+                min_limit = nvmlDeviceGetTemperatureThreshold(handle, NVML_TEMPERATURE_THRESHOLD_ACOUSTIC_MIN)
+                max_limit = nvmlDeviceGetTemperatureThreshold(handle, NVML_TEMPERATURE_THRESHOLD_ACOUSTIC_MAX)
 
-            if args.temperature_limit < min_limit or args.temperature_limit > max_limit: 
-                print(f"Error: Temperature limit must be in range {min_limit} - {max_limit}", file=sys.stderr)
-                exit(1)
+                if args.temperature_limit < min_limit or args.temperature_limit > max_limit: 
+                    print(f"Error: Temperature limit must be in range {min_limit} - {max_limit}", file=sys.stderr)
+                    exit(1)
 
-        if args.temperature_limit > 0:
-            if args.verbose:
-                print(f"Setting temperature limit to {args.temperature_limit} C")
+            if args.temperature_limit > 0:
+                if args.verbose:
+                    print(f"Setting temperature limit to {args.temperature_limit} C")
 
-            if not args.test:
-                default_temperature_limit = nvmlDeviceGetTemperatureThreshold(handle, NVML_TEMPERATURE_THRESHOLD_ACOUSTIC_CURR)
-                nvmlDeviceSetTemperatureThreshold(handle, NVML_TEMPERATURE_THRESHOLD_ACOUSTIC_CURR, args.temperature_limit)
+                if not args.test:
+                    default_temperature_limit = nvmlDeviceGetTemperatureThreshold(handle, NVML_TEMPERATURE_THRESHOLD_ACOUSTIC_CURR)
+                    nvmlDeviceSetTemperatureThreshold(handle, NVML_TEMPERATURE_THRESHOLD_ACOUSTIC_CURR, args.temperature_limit)
+        except NVMLError as error:
+            if error.value == NVML_ERROR_NOT_SUPPORTED:
+                print("Warning: Temperature limit option is not supported on this device", file=sys.stderr)
+            else:
+                raise error
 
         print(f"Running main loop (sleep = {args.sleep})...")
 

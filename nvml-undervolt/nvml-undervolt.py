@@ -16,6 +16,7 @@ import time
 import argparse
 import signal
 import math
+import platform
 
 try:
     from pynvml import *
@@ -245,18 +246,19 @@ def main():
             print(f"Error: Curve increment must not be lower than doubled clock step ({step_mhz*2})", file=sys.stderr)
             exit(1)
 
-        try:
-            default_persistence_mode = nvmlDeviceGetPersistenceMode(handle)
-            if default_persistence_mode:
-                print(f"Warning: Persistence mode is already enabled - make sure no other script is controlling clocks", file=sys.stderr)
+        if platform.system() == 'Linux':
+            try:
+                default_persistence_mode = nvmlDeviceGetPersistenceMode(handle)
+                if default_persistence_mode:
+                    print(f"Warning: Persistence mode is already enabled - make sure no other script is controlling clocks", file=sys.stderr)
 
-            if not default_persistence_mode and not args.test:
-                nvmlDeviceSetPersistenceMode(handle, NVML_FEATURE_ENABLED)
-        except NVMLError as error:
-            if error.value == NVML_ERROR_NOT_SUPPORTED:
-                print("Warning: Persistence mode is not supported on this device", file=sys.stderr)
-            else:
-                raise error
+                if not default_persistence_mode and not args.test:
+                    nvmlDeviceSetPersistenceMode(handle, NVML_FEATURE_ENABLED)
+            except NVMLError as error:
+                if error.value == NVML_ERROR_NOT_SUPPORTED:
+                    print("Warning: Persistence mode is not supported on this device", file=sys.stderr)
+                else:
+                    raise error
 
         try:
             if not args.power_limit == None and args.power_limit > 0:

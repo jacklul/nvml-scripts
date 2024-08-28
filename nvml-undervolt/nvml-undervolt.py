@@ -392,7 +392,7 @@ def main():
                             offset = args.core_offset
 
                         if not args.test:
-                            set_pstate_clocks(handle, NVML_CLOCK_GRAPHICS, offset, args.pstates)
+                            set_pstate_clocks(handle, NVML_CLOCK_GRAPHICS, offset, args.pstates) # connected with NVML_CLOCK_SM clock ?
 
                         if args.verbose:
                             print(f"Setting core offset to {offset}")

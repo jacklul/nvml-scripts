@@ -7,7 +7,7 @@ Simple hysteresis (on the way down) is supported.
 
 - at least driver version `520.56`
 - admin privileges
-- `nvidia-ml-py` Python package - search for `python-nvidia-ml-py` in your package manager or install it with `pipx --global install nvidia-ml-py`
+- `nvidia-ml-py` Python package - search for `python-nvidia-ml-py` in your package manager or install it with `pip install nvidia-ml-py` globally
 
 ## Example usage
 

@@ -209,9 +209,6 @@ def main():
     args = assign_env_values(args, types, ['env'])
     validate_args(args)
 
-    if os.getenv('INVOCATION_ID') or os.getenv('JOURNAL_STREAM'):
-        args.verbose = False
-
     if args.verbose:
         print(args)
 

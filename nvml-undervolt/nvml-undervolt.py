@@ -151,6 +151,31 @@ def set_pstate_clocks(handle, clock_type, clock_offset, target_pstates):
         struct.clockOffsetMHz = clock_offset
         nvmlDeviceSetClockOffsets(handle, struct)
 
+def set_clock_lock(handle, args, min_clock, max_clock):
+    if not args.test:
+        nvmlDeviceSetGpuLockedClocks(handle, int(min_clock), int(max_clock))
+
+    if args.verbose:
+        print(f"Locking core clocks at {min_clock} - {max_clock}")
+
+def set_clock_offset(handle, args, offeset, pstates, type='core'):
+    types = {
+        'graphics': NVML_CLOCK_GRAPHICS,
+        'sm': NVML_CLOCK_SM,
+        'memory': NVML_CLOCK_MEM,
+        'video': NVML_CLOCK_VIDEO,
+    }
+
+    if not type in types:
+        print(f"Error: Invalid clock type '{type}'", file=sys.stderr)
+        return
+
+    if not args.test:
+        set_pstate_clocks(handle, types[type], offset, args.pstates)
+
+    if args.verbose:
+        print(f"Setting {type} clock offset to {offset}")
+
 def main():
     parser = argparse.ArgumentParser(
         description="Undervolt script using official NVML API",
@@ -316,6 +341,7 @@ def main():
         offset = args.core_offset
 
         last_clock = 0
+        last_offset = 0
         last_change = time.time()
         last_underclock = False
         underclock = False
@@ -375,64 +401,47 @@ def main():
                         else:
                             print(f"Updating clock lock and offset at P{pstate} {clock}")
 
-                    if args.transition_clock > 0 and args.target_clock > 0:
-                        if max_clock > args.target_clock:
-                            print(f"Attempted to set max clock to {max_clock} while user defined target clock is {args.target_clock}", file=sys.stderr)
-                            max_clock = args.target_clock
+                    if max_clock > args.target_clock:
+                        print(f"Attempted to set max clock to {max_clock} while user defined target clock is {args.target_clock}", file=sys.stderr)
+                        max_clock = args.target_clock
 
-                        if not args.test:
-                            nvmlDeviceSetGpuLockedClocks(handle, int(min_clock), int(max_clock))
+                    if offset > args.core_offset:
+                        print(f"Attempted to set offset to {offset} while user defined offset is {args.core_offset}", file=sys.stderr)
+                        offset = args.core_offset
 
-                        if args.verbose:
-                            print(f"Locking core clocks at {min_clock} - {max_clock}")
+                    # Set clock lock before setting offset when going up
+                    if offset >= last_offset and args.transition_clock > 0 and args.target_clock > 0:
+                        set_clock_lock(handle, args, min_clock, max_clock)
 
                     if args.core_offset > 0:
-                        if offset > args.core_offset:
-                            print(f"Attempted to set offset to {offset} while user defined offset is {args.core_offset}", file=sys.stderr)
-                            offset = args.core_offset
-
-                        if not args.test:
-                            set_pstate_clocks(handle, NVML_CLOCK_GRAPHICS, offset, args.pstates) # connected with NVML_CLOCK_SM clock ?
-
-                        if args.verbose:
-                            print(f"Setting core offset to {offset}")
+                        set_clock_offset(handle, args, offset, args.pstates, 'graphics')
 
                     if args.memory_offset > 0 and not updateclock:  # No need to set memory clock each time core clock range is adjusted
-                        if not args.test:
-                            set_pstate_clocks(handle, NVML_CLOCK_MEM, args.memory_offset, args.pstates)
+                        set_clock_offset(handle, args, args.memory_offset, args.pstates, 'memory')
 
-                        if args.verbose:
-                            print(f"Setting memory offset to {args.memory_offset}")
+                    # Set clock lock after setting offset when going down
+                    if offset < last_offset and args.transition_clock > 0 and args.target_clock > 0:
+                        set_clock_lock(handle, args, min_clock, max_clock)
+
                 else:
                     if args.verbose:
                         print(f"Disabling undervolt settings at P{pstate} {clock}")
 
                     if args.core_offset > 0:
-                        if not args.test:
-                            set_pstate_clocks(handle, NVML_CLOCK_GRAPHICS, 0, args.pstates)
-
-                        if args.verbose:
-                            print(f"Setting core offset to 0")
+                        set_clock_offset(handle, args, 0, args.pstates, 'graphics')
 
                     if args.memory_offset > 0:
-                        if not args.test:
-                            set_pstate_clocks(handle, NVML_CLOCK_MEM, 0, args.pstates)
-
-                        if args.verbose:
-                            print(f"Setting memory offset to 0")
+                        set_clock_offset(handle, args, 0, args.pstates, 'memory')
 
                     if args.transition_clock > 0 and args.target_clock > 0:
-                        if not args.test:
-                            nvmlDeviceSetGpuLockedClocks(handle, 0, args.transition_clock)
-
-                        if args.verbose:
-                            print(f"Locking core clocks at 0 - {args.transition_clock}")
+                        set_clock_lock(handle, args, 0, args.transition_clock)
 
                 updateclock = False
                 last_change = time.time()
                 last_underclock = underclock
 
             last_clock = clock
+            last_offset = offset
 
             time.sleep(args.sleep)
     finally:

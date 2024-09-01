@@ -140,6 +140,10 @@ def interpolate_speed(temp, speed_curve, temp_points, min_temp, min_speed):
     return speed_curve[temp_points[-1]]
 
 def set_gpu_fan_policy(handle, fans = 1, manual = False):
+    # Possibly this could be replaced (default policy)
+    #for i in range(fans):
+    #    nvmlDeviceSetDefaultFanSpeed_v2(handle, i)
+
     for i in range(fans):
         if manual:
             nvmlDeviceSetFanControlPolicy(handle, i, NVML_FAN_POLICY_MANUAL)

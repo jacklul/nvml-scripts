@@ -158,7 +158,7 @@ def set_clock_lock(handle, args, min_clock, max_clock):
     if args.verbose:
         print(f"Locking core clocks at {min_clock} - {max_clock}")
 
-def set_clock_offset(handle, args, offeset, pstates, type):
+def set_clock_offset(handle, args, offset, pstates, type):
     types = {
         'graphics': NVML_CLOCK_GRAPHICS,
         'sm': NVML_CLOCK_SM,

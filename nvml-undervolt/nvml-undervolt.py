@@ -114,7 +114,7 @@ def validate_args(args):
         exit(1)
 
 def get_step_mhz(clocks):
-    if count(clocks) <= 2:
+    if len(clocks) <= 2:
         return 0
 
     clocks = clocks[0:3]

@@ -1,10 +1,6 @@
 # nvml-undervolt
 
-> [!WARNING]
-> Few people reported that the script is not working and voltage is unchanged.   
-> Possibly NVIDIA changed or broken something.
-
-**Currently this script is very experimental, tested on Windows only!**
+**This script is experimental!**
 
 This is a simple script to setup an undervolt on Linux by shifting the curve up using an offset and then locking the max clock.  
 Currently there is no straightforward way to achieve this as there is no voltage/curve control on Linux so this is my hacky scripted method.

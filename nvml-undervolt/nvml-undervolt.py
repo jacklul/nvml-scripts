@@ -17,6 +17,7 @@ import argparse
 import signal
 import math
 import platform
+import ctypes
 
 try:
     from pynvml import *
@@ -142,6 +143,14 @@ def interpolate_offset(value, offset, min_val, max_val, step_mhz):
         scaled_offset = int(scale * offset)
         return round_to_nearest_step(scaled_offset, step_mhz)
 
+class c_nvmlClockOffset_t(ctypes.Structure):
+    _fields_ = [
+        ("version", ctypes.c_uint),
+        ("type", ctypes.c_uint),
+        ("pstate", ctypes.c_uint),
+        ("clockOffsetMHz", ctypes.c_int),
+    ]
+
 def set_pstate_clocks(handle, clock_type, clock_offset, target_pstates):
     for pstate in range(0, target_pstates + 1):
         struct = c_nvmlClockOffset_t()
@@ -149,7 +158,8 @@ def set_pstate_clocks(handle, clock_type, clock_offset, target_pstates):
         struct.type = clock_type
         struct.pstate = pstate
         struct.clockOffsetMHz = clock_offset
-        nvmlDeviceSetClockOffsets(handle, struct)
+        nvmlDeviceSetClockOffsets(handle, ctypes.byref(struct))
+
 
 def set_clock_lock(handle, args, min_clock, max_clock):
     if not args.test:
